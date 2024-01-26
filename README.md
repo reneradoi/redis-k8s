@@ -91,3 +91,38 @@ rene:~/redis-k8s$ kubectl logs redis-sentinel-node-2 sentinel
 1:X 26 Jan 2024 09:48:26.354 * +reboot slave redis-sentinel-node-0.redis-sentinel-headless.default.svc.cluster.local:6379 redis-sentinel-node-0.redis-sentinel-headless.default.svc.cluster.local 6379 @ mymaster redis-sentinel-node-2.redis-sentinel-headless.default.svc.cluster.local 6379
 ```
 -> Sentinel has switched the Master to node 2, failover was completed
+
+## Teardown
+Remove Helm Chart for Redis installation:
+```
+rene:~/redis-k8s$ helm delete redis-sentinel
+release "redis-sentinel" uninstalled
+```
+
+Remove Redis client pod:
+```
+rene:~/redis-k8s$ kubectl get pods
+NAME           READY   STATUS    RESTARTS   AGE
+redis-client   1/1     Running   0          157m
+
+rene:~/redis-k8s$ kubectl delete pod redis-client
+pod "redis-client" deleted
+```
+
+Remove PVC's that are still bound:
+```
+rene:~/redis-k8s$ kubectl get pvc
+NAME                               STATUS   VOLUME                                     CAPACITY   ACCESS MODES   STORAGECLASS   AGE
+redis-data-redis-sentinel-node-0   Bound    pvc-9b89e90f-987d-48f1-9ed3-ec32050c180a   3Gi        RWO            standard       20h
+redis-data-redis-sentinel-node-1   Bound    pvc-76443e7d-5dcf-4c54-869a-eccd2a890bc1   3Gi        RWO            standard       170m
+redis-data-redis-sentinel-node-2   Bound    pvc-c688e50a-2c3d-4790-91cc-7211c10d7e46   3Gi        RWO            standard       170m
+
+rene:~/redis-k8s$ kubectl delete pvc redis-data-redis-sentinel-node-0 redis-data-redis-sentinel-node-1 redis-data-redis-sentinel-node-2 --force
+warning: Immediate deletion does not wait for confirmation that the running resource has been terminated. The resource may continue to run on the cluster indefinitely.
+persistentvolumeclaim "redis-data-redis-sentinel-node-0" force deleted
+persistentvolumeclaim "redis-data-redis-sentinel-node-1" force deleted
+persistentvolumeclaim "redis-data-redis-sentinel-node-2" force deleted
+
+rene:~/redis-k8s$ kubectl get pvc
+No resources found in default namespace.
+```
