@@ -55,3 +55,29 @@ create k8s port forwarding for external access:
 start redis cli (needs to be installed locally):
 
 `REDISCLI_AUTH="$REDIS_PASSWORD" redis-cli -h 127.0.0.1 -p 6379`
+
+## Test the Failover
+One of Sentinel's main features is automatic failover in case the master is no longer available.
+
+To test this, execute the following steps:
+- get current master:
+```
+redis-sentinel:26379> SENTINEL get-master-addr-by-name mymaster
+1) "redis-sentinel-node-0.redis-sentinel-headless.default.svc.cluster.local"
+2) "6379"
+```
+
+- shut down the pod that is currently running the master:
+```
+rene:~/redis-k8s$ kubectl delete pod redis-sentinel-node-0
+pod "redis-sentinel-node-0" deleted
+```
+
+- check who is master now:
+```
+redis-sentinel:26379> SENTINEL get-master-addr-by-name mymaster
+1) "redis-sentinel-node-2.redis-sentinel-headless.default.svc.cluster.local"
+2) "6379"
+```
+
+-> Sentinel has switched the Master to node 2, failover was completed
