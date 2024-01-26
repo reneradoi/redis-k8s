@@ -42,7 +42,7 @@ To get your password run:
 
 `kubectl exec -it redis-client --namespace default -- bash`
 
-3. Connect using the Redis&reg; CLI:
+3. Connect using the Redis CLI:
 
 `REDISCLI_AUTH="$REDIS_PASSWORD" redis-cli -h redis-sentinel -p 6379 # Read only operations`
 `REDISCLI_AUTH="$REDIS_PASSWORD" redis-cli -h redis-sentinel -p 26379 # Sentinel access`
@@ -80,4 +80,14 @@ redis-sentinel:26379> SENTINEL get-master-addr-by-name mymaster
 2) "6379"
 ```
 
+- check what is in the logs:
+```
+rene:~/redis-k8s$ kubectl logs redis-sentinel-node-2 sentinel
+1:X 26 Jan 2024 09:48:16.213 # +config-update-from sentinel 5add24b6f14969527b26e2b3d62ebfa73e2de554 redis-sentinel-node-1.redis-sentinel-headless.default.svc.cluster.local 26379 @ mymaster redis-sentinel-node-0.redis-sentinel-headless.default.svc.cluster.local 6379
+1:X 26 Jan 2024 09:48:16.213 # +switch-master mymaster redis-sentinel-node-0.redis-sentinel-headless.default.svc.cluster.local 6379 redis-sentinel-node-2.redis-sentinel-headless.default.svc.cluster.local 6379
+1:X 26 Jan 2024 09:48:16.214 * +slave slave redis-sentinel-node-1.redis-sentinel-headless.default.svc.cluster.local:6379 redis-sentinel-node-1.redis-sentinel-headless.default.svc.cluster.local 6379 @ mymaster redis-sentinel-node-2.redis-sentinel-headless.default.svc.cluster.local 6379
+1:X 26 Jan 2024 09:48:16.214 * +slave slave redis-sentinel-node-0.redis-sentinel-headless.default.svc.cluster.local:6379 redis-sentinel-node-0.redis-sentinel-headless.default.svc.cluster.local 6379 @ mymaster redis-sentinel-node-2.redis-sentinel-headless.default.svc.cluster.local 6379
+1:X 26 Jan 2024 09:48:16.306 * Sentinel new configuration saved on disk
+1:X 26 Jan 2024 09:48:26.354 * +reboot slave redis-sentinel-node-0.redis-sentinel-headless.default.svc.cluster.local:6379 redis-sentinel-node-0.redis-sentinel-headless.default.svc.cluster.local 6379 @ mymaster redis-sentinel-node-2.redis-sentinel-headless.default.svc.cluster.local 6379
+```
 -> Sentinel has switched the Master to node 2, failover was completed
